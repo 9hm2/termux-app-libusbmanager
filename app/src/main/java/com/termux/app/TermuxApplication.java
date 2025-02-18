@@ -17,9 +17,18 @@ import com.termux.shared.termux.shell.am.TermuxAmSocketServer;
 import com.termux.shared.termux.shell.TermuxShellManager;
 import com.termux.shared.termux.theme.TermuxThemeUtils;
 
+
+import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import green_green_avk.libusbmanager.LibUsbManager;
+
 public class TermuxApplication extends Application {
 
     private static final String LOG_TAG = "TermuxApplication";
+
+    @Keep
+    public LibUsbManager libUsbManager = null;
 
     public void onCreate() {
         super.onCreate();
@@ -71,6 +80,9 @@ public class TermuxApplication extends Application {
         if (isTermuxFilesDirectoryAccessible) {
             TermuxShellEnvironment.writeEnvironmentToFile(this);
         }
+
+        libUsbManager = new LibUsbManager(this);
+
     }
 
     public static void setLogConfig(Context context) {
