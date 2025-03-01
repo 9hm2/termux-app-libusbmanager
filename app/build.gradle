@@ -43,7 +43,7 @@ android {
         minSdkVersion project.properties.minSdkVersion.toInteger()
         targetSdkVersion project.properties.targetSdkVersion.toInteger()
         versionCode 122
-        versionName "0.122.0-green-green-avk+LibusbManager"
+        versionName "0.122.1"
 
         if (appVersionName) versionName = appVersionName
         validateVersionName(versionName)
