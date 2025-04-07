@@ -1,40 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--
-     https://material.io/develop/android/theming/dark
-    -->
-
-    <!-- TermuxActivity DayNight NoActionBar theme. -->
-    <!-- See https://developer.android.com/training/material/theme.html for how to customize the Material theme. -->
-    <!-- NOTE: Cannot use "Light." since it hides the terminal scrollbar on the default black background. -->
+    <!-- CRT-foszforzöld stílusú TermuxActivity téma -->
     <style name="Theme.TermuxActivity.DayNight.NoActionBar" parent="Theme.TermuxApp.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/black</item>
-        <item name="colorPrimaryVariant">@color/black</item>
 
-        <item name="android:windowBackground">@color/black</item>
+        <!-- Alapszín: foszforzöld háttérrel -->
+        <item name="colorPrimary">#00ff66</item>
+        <item name="colorPrimaryVariant">#00ff66</item>
 
-        <!-- Avoid action mode toolbar pushing down terminal content when
-             selecting text on pre-6.0 (non-floating toolbar). -->
+        <!-- Háttér: CRT-sötét olívazöld -->
+        <item name="android:windowBackground">#001a0f</item>
+
+        <!-- Szövegkijelölés alatti overlay ne tolja el a terminált -->
         <item name="android:windowActionModeOverlay">true</item>
 
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
 
-        <!-- https://developer.android.com/training/tv/start/start.html#transition-color -->
         <item name="android:windowAllowReturnTransitionOverlap">true</item>
         <item name="android:windowAllowEnterTransitionOverlap">true</item>
 
-        <!-- Left drawer. -->
-        <item name="buttonBarButtonStyle">@style/TermuxActivity.Drawer.ButtonBarStyle.Dark</item>
-        <item name="termuxActivityDrawerBackground">@color/black</item>
-        <item name="termuxActivityDrawerImageTint">@color/white</item>
+        <!-- Navigációs fiók: háttér és ikonok foszforzöldre -->
+        <item name="buttonBarButtonStyle">@style/TermuxActivity.Drawer.ButtonBarStyle.CRT</item>
+        <item name="termuxActivityDrawerBackground">#001a0f</item>
+        <item name="termuxActivityDrawerImageTint">#00ff66</item>
 
-        <!-- Extra keys colors. -->
-        <item name="extraKeysButtonTextColor">@color/white</item>
-        <item name="extraKeysButtonActiveTextColor">@color/red_400</item>
-        <item name="extraKeysButtonBackgroundColor">@color/black</item>
-        <item name="extraKeysButtonActiveBackgroundColor">@color/grey_500</item>
+        <!-- Extra billentyűk: foszforzöld szöveg, háttér CRT -->
+        <item name="extraKeysButtonTextColor">#00ff00</item>
+        <item name="extraKeysButtonActiveTextColor">#00ff66</item>
+        <item name="extraKeysButtonBackgroundColor">#001a0f</item>
+        <item name="extraKeysButtonActiveBackgroundColor">#00331f</item>
     </style>
 
+    <!-- Gombsáv CRT-stílusban -->
+    <style name="TermuxActivity.Drawer.ButtonBarStyle.CRT" parent="Widget.AppCompat.ButtonBar.AlertDialog">
+        <item name="android:textColor">#00ff66</item>
+        <item name="android:background">#001a0f</item>
+    </style>
 </resources>
