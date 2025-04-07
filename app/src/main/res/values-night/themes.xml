@@ -26,9 +26,6 @@
         <!-- Extra billentyűk -->
         <item name="extraKeysButtonTextColor">@color/crt_green_alt</item>
         <item name="extraKeysButtonActiveTextColor">@color/crt_green</item>
-        <item name="extraKeysButtonInactiveTextColor">@color/crt_green_alt</item>
-        <item name="extraKeysBackgroundColor">@color/crt_background</item>
-       
         <item name="extraKeysButtonBackgroundColor">@color/crt_background</item>
         <item name="extraKeysButtonActiveBackgroundColor">@color/crt_background</item>
     </style>
