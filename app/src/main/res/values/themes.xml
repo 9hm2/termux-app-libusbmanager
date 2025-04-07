@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Alap témák (nem módosítottuk őket, hogy megőrizzék a fallback működést) -->
+    <!-- Alap témák (változatlanul hagyva) -->
     <style name="Theme.TermuxApp.Light.DarkActionBar" parent="Theme.BaseActivity.Light.DarkActionBar"/>
     <style name="Theme.TermuxApp.Light.NoActionBar" parent="Theme.BaseActivity.Light.NoActionBar"/>
     <style name="Theme.TermuxApp.DayNight.DarkActionBar" parent="Theme.BaseActivity.DayNight.DarkActionBar"/>
@@ -11,35 +11,35 @@
     <style name="Theme.TermuxActivity.DayNight.NoActionBar" parent="Theme.TermuxApp.DayNight.NoActionBar">
 
         <!-- Foszforzöld fő szín -->
-        <item name="colorPrimary">#00ff66</item>
-        <item name="colorPrimaryVariant">#00ff66</item>
+        <item name="colorPrimary">@color/crt_green</item>
+        <item name="colorPrimaryVariant">@color/crt_green</item>
 
-        <!-- Háttér: sötét, enyhén olívazöldes fekete -->
-        <item name="android:windowBackground">#001a0f</item>
+        <!-- Háttér: CRT-sötét -->
+        <item name="android:windowBackground">@color/crt_background</item>
 
-        <!-- Kijelölés, áttűnések -->
+        <!-- Animációs és overlay beállítások -->
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:windowAllowReturnTransitionOverlap">true</item>
         <item name="android:windowAllowEnterTransitionOverlap">true</item>
 
-        <!-- Bal oldali navigációs fiók -->
+        <!-- Navigációs fiók -->
         <item name="buttonBarButtonStyle">@style/TermuxActivity.Drawer.ButtonBarStyle.CRT</item>
-        <item name="termuxActivityDrawerBackground">#001a0f</item>
-        <item name="termuxActivityDrawerImageTint">#00ff66</item>
+        <item name="termuxActivityDrawerBackground">@color/crt_background</item>
+        <item name="termuxActivityDrawerImageTint">@color/crt_green</item>
 
         <!-- Extra billentyűk -->
-        <item name="extraKeysButtonTextColor">#00ff00</item>
-        <item name="extraKeysButtonActiveTextColor">#00ff66</item>
-        <item name="extraKeysButtonBackgroundColor">#001a0f</item>
-        <item name="extraKeysButtonActiveBackgroundColor">#004d2a</item>
+        <item name="extraKeysButtonTextColor">@color/crt_green_alt</item>
+        <item name="extraKeysButtonActiveTextColor">@color/crt_green</item>
+        <item name="extraKeysButtonBackgroundColor">@color/crt_background</item>
+        <item name="extraKeysButtonActiveBackgroundColor">@color/crt_background_active</item>
     </style>
 
-    <!-- Bal oldali gombsáv CRT-stílusban -->
+    <!-- Gombsáv CRT-stílusban -->
     <style name="TermuxActivity.Drawer.ButtonBarStyle.CRT" parent="Widget.AppCompat.ButtonBar.AlertDialog">
-        <item name="android:textColor">#00ff66</item>
-        <item name="android:background">#001a0f</item>
+        <item name="android:textColor">@color/crt_green</item>
+        <item name="android:background">@color/crt_background</item>
     </style>
 
 </resources>
