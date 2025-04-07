@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Alap alert dialog stílus -->
     <style name="TermuxAlertDialogStyle" parent="@android:style/Theme.Material.Light.Dialog.Alert">
-        <!-- Seen in buttons on alert dialog: -->
         <item name="android:colorAccent">#212121</item>
     </style>
 
+    <!-- Light gombszín -->
     <style name="TermuxActivity.Drawer.ButtonBarStyle.Light" parent="@style/Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">@color/black</item>
     </style>
 
+    <!-- Dark gombszín -->
     <style name="TermuxActivity.Drawer.ButtonBarStyle.Dark" parent="@style/Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">@color/white</item>
+    </style>
+
+    <!-- CRT foszforzöld gombszín -->
+    <style name="TermuxActivity.Drawer.ButtonBarStyle.CRT" parent="@style/Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/crt_green</item>
+        <item name="android:background">@color/crt_background</item>
     </style>
 
 </resources>
