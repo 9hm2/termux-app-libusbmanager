@@ -29,6 +29,8 @@ public class TermuxApplication extends Application {
 
     @Keep
     public LibUsbManager libUsbManager = null;
+    @Keep
+    public BluetoothApiManager bluetoothApiManager = null;
 
     public void onCreate() {
         super.onCreate();
@@ -82,6 +84,7 @@ public class TermuxApplication extends Application {
         }
 
         libUsbManager = new LibUsbManager(this);
+        bluetoothApiManager = new BluetoothApiManager(this);
 
     }
 
