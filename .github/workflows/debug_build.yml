@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - CRT
       - 'github-releases/**'
   pull_request:
     branches:
