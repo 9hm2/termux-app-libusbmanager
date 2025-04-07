@@ -36,10 +36,4 @@
         <item name="extraKeysButtonActiveBackgroundColor">@color/crt_background</item>
     </style>
 
-    <!-- Gombsáv CRT-stílusban -->
-    <style name="TermuxActivity.Drawer.ButtonBarStyle.CRT" parent="Widget.AppCompat.ButtonBar.AlertDialog">
-        <item name="android:textColor">@color/crt_green</item>
-        <item name="android:background">@color/crt_background</item>
-    </style>
-
 </resources>
