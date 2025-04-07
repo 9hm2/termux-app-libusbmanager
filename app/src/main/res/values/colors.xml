@@ -1,3 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Foszforzöld és CRT-színek -->
+    <color name="crt_green">#00ff66</color>
+    <color name="crt_green_alt">#00ff00</color>
+    <color name="crt_background">#001a0f</color>
+    <color name="crt_background_active">#00331f</color>
 </resources>
