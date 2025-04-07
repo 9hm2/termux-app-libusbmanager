@@ -19,7 +19,7 @@
         <item name="android:windowAllowEnterTransitionOverlap">true</item>
 
         <!-- Navigációs fiók -->
-        <item name="buttonBarButtonStyle">@style/TermuxActivity.Drawer.ButtonBarStyle.CRT</item>
+        <item name="buttonBarButtonStyle">@style/TermuxActivity.Drawer.ButtonBarStyle.Dark</item>
         <item name="termuxActivityDrawerBackground">@color/crt_background</item>
         <item name="termuxActivityDrawerImageTint">@color/crt_green</item>
 
