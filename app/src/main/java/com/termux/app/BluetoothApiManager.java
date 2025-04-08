@@ -1,14 +1,15 @@
 package com.termux.app;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothProfile;
-import android.bluetooth.BluetoothSocket;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -18,18 +19,18 @@ import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class BluetoothApiManager {
 
     @NonNull
-    protected final Context context;
+    private final Context context;
     @NonNull
     private final String socketName;
     @NonNull
@@ -37,8 +38,7 @@ public class BluetoothApiManager {
     @NonNull
     private final BluetoothAdapter bluetoothAdapter;
 
-    private final ConcurrentHashMap<String, BluetoothSocket> socketMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, BluetoothGatt> gattMap = new ConcurrentHashMap<>();
+    private BluetoothGatt activeGatt;
 
     public BluetoothApiManager(@NonNull final Context context) {
         this(context, context.getApplicationContext().getPackageName() + ".bluetooth");
@@ -47,196 +47,78 @@ public class BluetoothApiManager {
     public BluetoothApiManager(@NonNull final Context context, @NonNull final String socketName) {
         this.context = context.getApplicationContext();
         this.socketName = socketName;
-        this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        BluetoothManager bluetoothManager = (BluetoothManager)
+                context.getSystemService(Context.BLUETOOTH_SERVICE);
+        if (bluetoothManager == null)
+            throw new RuntimeException("BluetoothManager not available");
+
+        bluetoothAdapter = bluetoothManager.getAdapter();
         if (bluetoothAdapter == null)
-            throw new RuntimeException("Bluetooth not supported");
-        lth = new Thread(server, "BluetoothApiServer");
+            throw new RuntimeException("BluetoothAdapter not available");
+
+        lth = new Thread(this::runServer, "BluetoothApiServer");
         lth.setDaemon(true);
         lth.start();
     }
 
-    private boolean checkPermissions() {
-        if (Build.VERSION.SDK_INT >= 31) {
-            return context.checkSelfPermission("android.permission.BLUETOOTH_CONNECT") == PackageManager.PERMISSION_GRANTED &&
-                   context.checkSelfPermission("android.permission.BLUETOOTH_SCAN") == PackageManager.PERMISSION_GRANTED;
-        }
-        return true;
-    }
-
-    private void client(@NonNull final LocalSocket socket) {
-        try {
-            final DataInputStream dis = new DataInputStream(socket.getInputStream());
-            final DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-
-            while (true) {
-                final String line = dis.readUTF().trim();
-                if (line.isEmpty()) continue;
-                final String[] parts = line.split(" ");
-                final String cmd = parts[0];
-
-                switch (cmd) {
-                    case "ENABLE": {
-                        if (!checkPermissions()) {
-                            dos.writeUTF("ERROR Missing Bluetooth permissions");
-                            break;
-                        }
-                        bluetoothAdapter.enable();
-                        dos.writeUTF("ENABLED");
-                        break;
-                    }
-                    case "DISABLE": {
-                        bluetoothAdapter.disable();
-                        dos.writeUTF("DISABLED");
-                        break;
-                    }
-                    case "LIST": {
-                        Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
-                        for (BluetoothDevice device : bondedDevices) {
-                            dos.writeUTF(device.getName() + " [" + device.getAddress() + "]");
-                        }
-                        dos.writeUTF("");
-                        break;
-                    }
-                    case "PAIR": {
-                        if (parts.length < 2) {
-                            dos.writeUTF("ERROR Missing MAC");
-                            break;
-                        }
-                        String mac = parts[1];
-                        BluetoothDevice dev = bluetoothAdapter.getRemoteDevice(mac);
-                        dev.createBond();
-                        dos.writeUTF("PAIR_REQUESTED");
-                        break;
-                    }
-                    case "CONNECT": {
-                        if (parts.length < 3) {
-                            dos.writeUTF("ERROR CONNECT <MAC> <UUID>");
-                            break;
-                        }
-                        String mac = parts[1];
-                        UUID uuid = UUID.fromString(parts[2]);
-                        BluetoothDevice dev = bluetoothAdapter.getRemoteDevice(mac);
-                        BluetoothSocket btSocket = dev.createRfcommSocketToServiceRecord(uuid);
-                        btSocket.connect();
-                        socketMap.put(mac, btSocket);
-                        dos.writeUTF("CONNECTED " + mac);
-                        break;
-                    }
-                    case "SEND": {
-                        if (parts.length < 3) {
-                            dos.writeUTF("ERROR SEND <MAC> <DATA>");
-                            break;
-                        }
-                        String mac = parts[1];
-                        String msg = line.substring(cmd.length() + mac.length() + 2);
-                        BluetoothSocket s = socketMap.get(mac);
-                        if (s != null) {
-                            s.getOutputStream().write(msg.getBytes());
-                            s.getOutputStream().flush();
-                            dos.writeUTF("SENT");
-                        } else {
-                            dos.writeUTF("ERROR Not connected");
-                        }
-                        break;
-                    }
-                    case "RECV": {
-                        if (parts.length < 2) {
-                            dos.writeUTF("ERROR RECV <MAC>");
-                            break;
-                        }
-                        String mac = parts[1];
-                        BluetoothSocket s = socketMap.get(mac);
-                        if (s != null) {
-                            byte[] buffer = new byte[1024];
-                            int len = s.getInputStream().read(buffer);
-                            if (len > 0)
-                                dos.writeUTF("DATA " + new String(buffer, 0, len));
-                            else
-                                dos.writeUTF("NO_DATA");
-                        } else {
-                            dos.writeUTF("ERROR Not connected");
-                        }
-                        break;
-                    }
-                    case "DISCONNECT": {
-                        String mac = parts[1];
-                        BluetoothSocket s = socketMap.get(mac);
-                        if (s != null) {
-                            s.close();
-                            socketMap.remove(mac);
-                            dos.writeUTF("DISCONNECTED " + mac);
-                        } else {
-                            dos.writeUTF("ERROR Not connected");
-                        }
-                        break;
-                    }
-                    case "GATT_CONNECT": {
-                        String mac = parts[1];
-                        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(mac);
-                        BluetoothGatt gatt = device.connectGatt(context, false, new BluetoothGattCallback() {
-                            @Override
-                            public void onConnectionStateChange(BluetoothGatt g, int status, int newState) {
-                                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                                    g.discoverServices();
-                                }
-                            }
-                        });
-                        gattMap.put(mac, gatt);
-                        dos.writeUTF("GATT_CONNECTING");
-                        break;
-                    }
-                    case "GATT_READ": {
-                        String mac = parts[1];
-                        UUID uuid = UUID.fromString(parts[2]);
-                        BluetoothGatt gatt = gattMap.get(mac);
-                        if (gatt != null) {
-                            for (BluetoothGattService service : gatt.getServices()) {
-                                BluetoothGattCharacteristic ch = service.getCharacteristic(uuid);
-                                if (ch != null) {
-                                    gatt.readCharacteristic(ch);
-                                    dos.writeUTF("GATT_READ_REQUESTED");
-                                    break;
-                                }
-                            }
-                        } else {
-                            dos.writeUTF("ERROR GATT not connected");
-                        }
-                        break;
-                    }
-                    case "GATT_WRITE": {
-                        String mac = parts[1];
-                        UUID uuid = UUID.fromString(parts[2]);
-                        String hexData = parts[3];
-                        byte[] data = hexStringToByteArray(hexData);
-                        BluetoothGatt gatt = gattMap.get(mac);
-                        if (gatt != null) {
-                            for (BluetoothGattService service : gatt.getServices()) {
-                                BluetoothGattCharacteristic ch = service.getCharacteristic(uuid);
-                                if (ch != null) {
-                                    ch.setValue(data);
-                                    gatt.writeCharacteristic(ch);
-                                    dos.writeUTF("GATT_WRITE_REQUESTED");
-                                    break;
-                                }
-                            }
-                        } else {
-                            dos.writeUTF("ERROR GATT not connected");
-                        }
-                        break;
-                    }
-                    case "EXIT": {
-                        dos.writeUTF("BYE");
-                        return;
-                    }
-                    default:
-                        dos.writeUTF("UNKNOWN_COMMAND: " + cmd);
-                        break;
-                }
-                dos.flush();
+    private void runServer() {
+        try (LocalServerSocket serverSocket = new LocalServerSocket(socketName)) {
+            while (!Thread.interrupted()) {
+                final LocalSocket socket = serverSocket.accept();
+                final Thread cth = new Thread(() -> handleClient(socket));
+                cth.setDaemon(false);
+                cth.start();
             }
         } catch (IOException e) {
-            new Handler(Looper.getMainLooper()).post(() ->
-                    Toast.makeText(context, "Bluetooth Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            postToast("Bluetooth server error: " + e.getMessage());
+        }
+    }
+
+    private void handleClient(LocalSocket socket) {
+        try (DataInputStream in = new DataInputStream(socket.getInputStream());
+             OutputStream out = socket.getOutputStream()) {
+
+            String command = in.readUTF();
+
+            switch (command) {
+                case "enable":
+                    boolean enabled = enableBluetooth();
+                    out.write(enabled ? 1 : 0);
+                    break;
+                case "list_paired":
+                    Set<BluetoothDevice> paired = bluetoothAdapter.getBondedDevices();
+                    for (BluetoothDevice dev : paired) {
+                        out.write((dev.getName() + " [" + dev.getAddress() + "]\n").getBytes());
+                    }
+                    break;
+                case "is_enabled":
+                    out.write(bluetoothAdapter.isEnabled() ? 1 : 0);
+                    break;
+                case "ble_scan":
+                    if (!hasBluetoothPermissions()) {
+                        postToast("BLE scan: permission denied");
+                        break;
+                    }
+                    bluetoothAdapter.getBluetoothLeScanner().startScan(bleScanCallback);
+                    postToast("BLE scan started");
+                    break;
+                case "ble_stop":
+                    bluetoothAdapter.getBluetoothLeScanner().stopScan(bleScanCallback);
+                    postToast("BLE scan stopped");
+                    break;
+                case "gatt_connect":
+                    String address = in.readUTF();
+                    BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+                    activeGatt = device.connectGatt(context, false, gattCallback);
+                    postToast("GATT connecting to " + address);
+                    break;
+                default:
+                    out.write(("Unknown command: " + command + "\n").getBytes());
+            }
+
+        } catch (IOException e) {
+            postToast("Bluetooth client error: " + e.getMessage());
         } finally {
             try {
                 socket.close();
@@ -244,36 +126,54 @@ public class BluetoothApiManager {
         }
     }
 
-    private final Runnable server = () -> {
-        try (LocalServerSocket serverSocket = new LocalServerSocket(socketName)) {
-            while (!Thread.interrupted()) {
-                final LocalSocket socket = serverSocket.accept();
-                final Thread cth = new Thread(() -> client(socket));
-                cth.setDaemon(false);
-                cth.start();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private boolean enableBluetooth() {
+        if (!hasBluetoothPermissions()) {
+            postToast("Bluetooth permissions not granted");
+            return false;
         }
-    };
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(enableBtIntent);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean hasBluetoothPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+                   ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED;
+        } else {
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED &&
+                   ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+
+    private void postToast(String msg) {
+        new Handler(Looper.getMainLooper()).post(() ->
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+        );
+    }
 
     public void recycle() {
         lth.interrupt();
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        lth.interrupt();
-        super.finalize();
-    }
-
-    private static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
+    // BLE SCAN CALLBACK
+    private final ScanCallback bleScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            BluetoothDevice device = result.getDevice();
+            postToast("BLE device: " + device.getName() + " [" + device.getAddress() + "]");
         }
-        return data;
-    }
+    };
+
+    // GATT CALLBACK
+    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(@NonNull BluetoothGatt gatt, int status, int newState) {
+            postToast("GATT connection state: " + newState);
+        }
+    };
 }
