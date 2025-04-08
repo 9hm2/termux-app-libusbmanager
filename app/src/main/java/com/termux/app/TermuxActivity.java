@@ -79,6 +79,8 @@ import java.util.Arrays;
  */
 public final class TermuxActivity extends AppCompatActivity implements ServiceConnection {
 
+    private BluetoothApiManager bluetoothApiManager;
+
     /**
      * The connection to the {@link TermuxService}. Requested in {@link #onCreate(Bundle)} with a call to
      * {@link #bindService(Intent, ServiceConnection, int)}, and obtained and stored in
@@ -225,6 +227,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
 
         setMargins();
+
+        bluetoothApiManager = new BluetoothApiManager(this, this);
 
         mTermuxActivityRootView = findViewById(R.id.activity_termux_root_view);
         mTermuxActivityRootView.setActivity(this);
