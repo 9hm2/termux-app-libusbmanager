@@ -84,7 +84,7 @@ public class TermuxApplication extends Application {
         }
 
         libUsbManager = new LibUsbManager(this);
-        bluetoothApiManager = new BluetoothApiManager(this);
+        //bluetoothApiManager = new BluetoothApiManager(this);
 
     }
 
