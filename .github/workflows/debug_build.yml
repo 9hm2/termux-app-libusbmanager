@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - CRT
+      - BluetoothApiManager
       - 'github-releases/**'
   pull_request:
     branches:
