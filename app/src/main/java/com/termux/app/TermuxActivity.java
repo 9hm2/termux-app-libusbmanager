@@ -228,7 +228,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         setMargins();
 
-        bluetoothApiManager = new BluetoothApiManager(this, this);
+        bluetoothApiManager = new BluetoothApiManager(this);
 
         mTermuxActivityRootView = findViewById(R.id.activity_termux_root_view);
         mTermuxActivityRootView.setActivity(this);
