@@ -1,6 +1,5 @@
 package com.termux.app;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -49,18 +48,17 @@ public class BluetoothApiManager {
         this.context = context.getApplicationContext();
         this.socketName = socketName;
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter == null) {
+        if (bluetoothAdapter == null)
             throw new RuntimeException("Bluetooth not supported");
-        }
         lth = new Thread(server, "BluetoothApiServer");
         lth.setDaemon(true);
         lth.start();
     }
 
     private boolean checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
-                   context.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED;
+        if (Build.VERSION.SDK_INT >= 31) {
+            return context.checkSelfPermission("android.permission.BLUETOOTH_CONNECT") == PackageManager.PERMISSION_GRANTED &&
+                   context.checkSelfPermission("android.permission.BLUETOOTH_SCAN") == PackageManager.PERMISSION_GRANTED;
         }
         return true;
     }
